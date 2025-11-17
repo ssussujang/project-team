@@ -8,3 +8,6 @@ import com.example.demo.DTO.SignupDTO;
 public interface SignMapper {
 	int InsertSignup(SignupDTO t);
 }
+
+
+
