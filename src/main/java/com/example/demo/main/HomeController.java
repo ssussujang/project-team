@@ -8,7 +8,7 @@ public class HomeController {
 	
 	@GetMapping("/")
 	public String showForm() {
-		return "Signupsaaaaaaaaaaaa";
+		return "Signup";
 	}
 	
 	
