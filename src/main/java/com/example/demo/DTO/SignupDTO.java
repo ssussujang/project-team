@@ -13,5 +13,5 @@ public class SignupDTO {
 
 	private String t_name;
 	private int t_age;
-	private String t_genders;
+	
 }
