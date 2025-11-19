@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.practice.mapper.TestMapper">
+	<insert id="InsertUser" parameterType="com.example.practice.dto.DTO">
+		insert into nov17_myid values  (#{m_name, jdbcType=VARCHAR}, #{m_age, jdbcType=NUMERIC})
+		
+	</insert>
+  <select id="exists" parameterType="string" resultType="int">
+    SELECT COUNT(*) FROM nov17_myid WHERE m_name = #{name}
+	</select>
+
+	<update id="UpdateUser" parameterType="com.example.practice.dto.DTO">
+    	UPDATE nov17_myid 
+    	SET m_age = #{m_age}
+    	WHERE m_name = #{m_name}
+	</update>
+</mapper>
+
+
+

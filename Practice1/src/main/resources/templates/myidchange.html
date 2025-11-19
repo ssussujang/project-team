@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>아이디 정보 수정</title>
+</head>
+<body> 
+	<h2>아이디 정보 수정</h2>
+
+	
+	<form action="/test/check" method="get">
+		이름: <input type="text" name="m_name" required>
+		<button>인증</button>
+	</form>
+
+
+	<form action="/test/update" method="post">
+		
+		새 나이: <input type="text" name="m_age" required>
+		<button type="submit">수정</button>
+	</form>
+
+	<!-- 메시지 출력 -->
+	<div th:if="${msg}">
+		<p th:text="${msg}"></p>
+	</div>
+
+</body>
+</html>

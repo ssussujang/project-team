@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+
+<form id="regForm" action="/test/register" method="post">
+	<table>
+
+		<tr>
+			<td>
+				이름: <input type="text" name="m_name" required>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				나이: <input type="text" id="m_age" name="m_age" required>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<button type="submit">가입</button>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<button type="button" onclick="location.href='/test/change'">
+					수정 페이지로 이동
+				</button>
+			</td>
+		</tr>
+
+	</table>
+</form>
+
+<script>
+	document.getElementById("regForm").addEventListener("submit", function(e) {
+
+	    let age = document.getElementById("m_age").value.trim();
+
+	    // 숫자 변환
+	    age = Number(age);
+
+	    // 숫자 아니거나 범위 벗어나면 submit 막기
+	    if (isNaN(age) || age < 1 || age > 100) {
+	        alert("나이는 1살부터 100살까지만 숫자로 입력 가능합니다.");
+	        e.preventDefault();
+	    }
+	});
+</script>
+
+</body>
+</html>
