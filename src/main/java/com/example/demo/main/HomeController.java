@@ -8,7 +8,11 @@ public class HomeController {
 	
 	@GetMapping("/")
 	public String showForm() {
+<<<<<<< HEAD
 		return "tesst";
+=======
+		return "Signupsssss";
+>>>>>>> 875011fa792afb5059048e5523b33100cdba693a
 	}
 	
 	
