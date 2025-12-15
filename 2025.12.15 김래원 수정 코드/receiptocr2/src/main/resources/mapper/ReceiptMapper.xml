@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.test.ocr.mapper.ReceiptMapper">
+
+	<select id="getReceiptsByMonth" resultType="com.test.ocr.DTO.ReceiptDTO">
+		SELECT r.r_id, r.user_id, r.r_shop,
+			r.r_adrr, r.r_date, r.r_total
+		From receipt WHERE r.user_id = #{user_id}
+			AND DATE_FORMAT(r.r_date, '%Y-%m') = #{yearMonth}
+		ORDER BY r.r_date ASC;
+
+	</select>
+	
+	<select id="findByrUserAndMonth" resultMap="ReceiptMap">
+		SELECT * FROM receipt WHERE user_id = #{userId}
+			AND DATE_FORMAT(r_date, '%Y-%m') = #{yearMonth}
+	
+	</select>
+	
+	<resultMap type="com.test.ocr.DTO.ReceiptDTO" id="ReceiptMap">
+		<id property="r_id" column="r_id"/>
+		<result property="user_id" column="user_id"/>
+		<result property="r_shop" column="r_shop"/>
+		<result property="r_adrr" column="r_adrr"/>
+		<result property="r_date" column="r_date"/>
+		<result property="r_total" column="r_total"/>
+	</resultMap>
+	
+	
+	
+	<!-- 마지막 PK 가져오기 -->
+	<select id="getLastInsertId" resultType="int">
+	    SELECT LAST_INSERT_ID()
+	</select>
+	
+	<!-- 상품 1줄 저장 -->
+	<!-- save 테이블용 매핑 -->
+    <resultMap id="saveResultMap" type="com.test.ocr.DTO.SaveDTO">
+        <id     column="s_id"       property="s_id"/>
+        <result column="user_id"    property="user_id"/>
+        <result column="s_shop"     property="s_shop"/>
+        <result column="s_adrr"     property="s_adrr"/>
+        <result column="s_date"     property="s_date"/>
+        <result column="items_name" property="items_name"/>
+        <result column="items_price" property="items_price"/>
+        <result column="items_count" property="items_count"/>
+    </resultMap>
+	
+	<select id="selectByPeriod"
+            resultMap="saveResultMap">
+        SELECT
+            s_id,
+            user_id,
+            s_shop,
+            s_adrr,
+            s_date,
+            items_name,
+            items_price,
+            items_count
+        FROM save
+        WHERE s_date BETWEEN #{start} AND #{end}
+          AND user_id = #{userId}
+        ORDER BY s_date ASC, s_id ASC
+    </select>
+
+    <insert id="insertReceipt" parameterType="com.test.ocr.DTO.SaveDTO">
+        INSERT INTO save (
+        	
+            user_id,
+            s_shop,
+            s_adrr,
+            s_date,
+            items_name,
+            items_price,
+            items_count
+        )
+        VALUES (
+        	
+            #{user_id},
+            #{s_shop},
+            #{s_adrr},
+            #{s_date},
+            #{items_name},
+            #{items_price},
+            #{items_count}
+        )
+    </insert>
+	
+	
+
+
+</mapper>

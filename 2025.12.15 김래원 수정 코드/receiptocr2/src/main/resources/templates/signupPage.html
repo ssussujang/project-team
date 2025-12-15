@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	  xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8">
+<title>회원가입</title>
+<link th:rel="stylesheet" th:href = "@{/css/Signup.css}">
+
+</head>
+<body>
+	<form th:action="@{/user/register.reg}" th:object="${userdto}" method="post">
+	
+	    <table id="signupTbl">
+	        <tr>
+	            <td class="signTitle" colspan="2"><h3>회원가입</h3></td>
+	        </tr>
+	
+	        <!-- ID -->
+	        <tr>
+	            <td class="idText" align="right">ID</td>
+	            <td class="idInput">
+	                <input th:field="*{u_id}" placeholder="아이디">
+	                <p style="color:red; font-size: 13pt;" class="error" th:if="${#fields.hasErrors('u_id')}" 
+	                   th:errors="*{u_id}"></p>
+	            </td>
+	        </tr>
+	
+	        <!-- PW -->
+	        <tr>
+	            <td class="pwText" align="right">PW</td>
+	            <td class="pwInput">
+	                <input th:field="*{u_pw}" type="password" placeholder="비밀번호">
+	                <p style="color:red; font-size: 13pt;" class="error" th:if="${#fields.hasErrors('u_pw')}" 
+	                   th:errors="*{u_pw}"></p>
+	            </td>
+	        </tr>
+	
+	        <!-- NAME -->
+	        <tr>
+	            <td class="nameText" align="right">이름</td>
+	            <td class="nameInput">
+	                <input th:field="*{u_name}" placeholder="이름">
+	                <p style="color:red; font-size: 13pt;" class="error" th:if="${#fields.hasErrors('u_name')}" 
+	                   th:errors="*{u_name}"></p>
+	            </td>
+	        </tr>
+	
+	        <!-- email -->
+	        <tr>
+	            <td class="emailText" align="right">이메일</td>
+	            <td class="emailInput">
+	                <input th:field="*{u_email}" placeholder="이메일">
+	                <p style="color:red; font-size: 13pt;" class="error" th:if="${#fields.hasErrors('u_email')}" 
+	                   th:errors="*{u_email}"></p>
+	            </td>
+	        </tr>
+	        
+	        <!-- 생년월일 -->
+	        <tr>
+	            <td class="birthText" align="right">생년월일</td>
+	            <td class="birthInput">
+	                <input th:field="*{u_birthday}" placeholder="YYMMDD">
+	                <p style="color:red; font-size: 13pt;" class="error" th:if="${#fields.hasErrors('u_birthday')}" 
+	                   th:errors="*{u_birthday}"></p>
+	            </td>
+	        </tr>
+	        <!-- gender -->
+			<tr>
+			    <td class="genderText" align="right">성별</td>
+			    <td class="birthInput">
+			        <!-- 남자 -->
+			        <label>
+			            <input type="radio" th:field="*{gender}" value="MAIL"> 남자
+			        </label>
+			
+			        <!-- 여자 -->
+			        <label style="margin-left: 10px;">
+			            <input type="radio" th:field="*{gender}" value="FEMAIL"> 여자
+			        </label>
+			
+			        <!-- 에러 메시지 -->
+			        <p style="color:red; font-size:13pt;" class="error"
+			           th:if="${#fields.hasErrors('gender')}"
+			           th:errors="*{gender}"></p>
+			    </td>
+			</tr>
+	
+	        <!-- SUBMIT -->
+	        <tr>
+	            <td class="signupbtn" align="center" colspan="2">
+	                <button type="submit">회원가입</button>
+	            </td>
+	        </tr>
+	    </table>
+	</form>
+	<table id="backgroundTbl">
+	 	<tr>
+	 		<td>
+	 			  
+	 		</td>
+	 	</tr>
+	 </table>
+	
+	
+</body>
+</html>

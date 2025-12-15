@@ -1,0 +1,53 @@
+@charset "UTF-8";
+
+
+@font-face {
+	font-family: "Party";
+	src: url("party.ttf");
+}
+
+body {
+	font-family: "Party";
+	
+}
+
+#backgroundTbl {
+	width: 100%;
+	height: 100%;
+	position: fixed;
+	z-index: -1;
+	background-image: url('space.jpg');
+}
+
+
+
+#signupTbl {
+	
+	border-bottom: white solid 3px;
+	border-right: white solid 3px;
+	border-left: white solid 3px;
+	border-top: white solid 3px;
+	border-radius: 8px;
+	width: 40%;
+	height: 600px;
+	right: 30%;
+	left: 30%;
+	top: 10%;	
+	text-align: center;
+	position: absolute;
+	color: white;
+	
+}
+
+
+#signupTbl .signTitle {
+	border-bottom: white dashed 5px;
+	font-size: 25pt;
+	
+	height: 80px;
+}
+
+#signupTbl .error {
+	color: red;
+	font-size: 13pt;
+}

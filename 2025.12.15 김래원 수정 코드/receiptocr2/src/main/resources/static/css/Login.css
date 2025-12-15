@@ -1,0 +1,123 @@
+@charset "UTF-8";
+
+@font-face {
+	font-family: "Party";
+	src: url("party.ttf");
+}
+
+body {
+	font-family: "Party";
+	
+}
+
+#menuTbl {
+	width: 100%;
+	height: 80px;
+	border-bottom: black solid 3px; 
+	border-right: black solid 3px; 
+	border-left: black solid 3px; 
+	border-top: black solid 3px; 
+	background-color: #acff5c80;
+	text-align: center;
+	
+}
+
+
+
+#menuTbl .title {
+	text-align: center;
+
+}
+
+
+#loginTbl {
+	
+	border-bottom: black solid 3px; 
+	border-right: black solid 3px; 
+	border-left: black solid 3px; 
+	border-top: black solid 3px;
+	border-radius: 5px; 
+	right: 10px;
+	top: 130px;
+	position: absolute;
+	width: 200px;
+	height: 120px;
+	text-align: center;
+	
+}
+
+#userTbl {
+	
+	border-bottom: black solid 3px; 
+	border-right: black solid 3px; 
+	border-left: black solid 3px; 
+	border-top: black solid 3px;
+	border-radius: 5px; 
+	right: 10px;
+	top: 130px;
+	position: absolute;
+	width: 200px;
+	height: 120px;
+	text-align: center;
+	
+}
+
+
+
+
+/* 바깥 테이블을 flex container로 만들지 말고,
+   내부 td에 flex를 적용해야 함 */
+#homeTbl {
+    width: 65%;
+    min-height: 200px;     /* 최소높이 = 300px */
+    height: auto;          /* 내용에 따라 늘어나도록 설정 */
+    position: absolute;
+    top: 130px;
+    left: 260px;
+    border: 5px solid black;
+    border-radius: 8px;
+    background-color: #fff8d490;
+
+    display: table; /* 테이블 역할 유지 */
+}
+
+/* ⭐ 핵심: 내부를 flex로 세로 배치 */
+#homeTbl .inputReceipt {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* 제목 상단 고정 */
+#homeTbl .title {
+    margin: 20px 0;
+    font-size: 35px;
+    text-align: center;
+   
+}
+
+/* OCR 결과 영역 */
+#result {
+    margin: 20px auto 0 auto;
+    width: 70%;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    text-align: center;
+    font-size: 15pt;
+}
+
+
+
+
+/* 업로드 영역 → 테이블 아래쪽으로 밀기 */
+#upload {
+    margin-top: 30px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+
+
+
