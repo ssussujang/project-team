@@ -13,7 +13,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;              // ✅ Spring MediaType
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -54,6 +54,10 @@ public class OcrService {
 
             // 3) JSON 바디 구성 (Base64 포함)
             byte[] bytes = file.getBytes();
+
+            // ✅ (추가) 실제 파일 바이트 검증 + 디버그 로그
+            validateImage(bytes, format, file);
+
             String base64 = Base64.getEncoder().encodeToString(bytes);
 
             JSONObject body = new JSONObject();
@@ -74,6 +78,14 @@ public class OcrService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("X-OCR-SECRET", secret);
+
+            // ✅ (추가) 전송 직전 핵심 로그 (data 내용은 절대 출력하지 않음)
+            System.out.println("[CLOVA REQ] format=" + format
+                    + ", name=" + file.getOriginalFilename()
+                    + ", ct=" + file.getContentType()
+                    + ", base64Len=" + base64.length()
+                    + ", ts=" + body.getLong("timestamp")
+                    + ", contentTypeHeader=" + headers.getContentType());
 
             HttpEntity<String> request = new HttpEntity<>(body.toString(), headers);
 
@@ -226,6 +238,40 @@ public class OcrService {
             if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "jpg";
         }
         throw new IllegalArgumentException("지원하지 않는 이미지 타입: contentType=" + ct + ", filename=" + name);
+    }
+
+    // ✅ (추가) 이미지 파일 검증 + 헤더(매직바이트) 로그
+    private void validateImage(byte[] bytes, String format, MultipartFile file) {
+        System.out.println("[UPLOAD] name=" + file.getOriginalFilename()
+                + ", ct=" + file.getContentType()
+                + ", detectedFormat=" + format
+                + ", size=" + (bytes == null ? -1 : bytes.length)
+                + ", head=" + toHex(bytes, 16));
+
+        if (bytes == null || bytes.length < 8) {
+            throw new IllegalArgumentException("이미지 파일이 너무 작거나 비어있음");
+        }
+
+        boolean isJpg = (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8 && (bytes[2] & 0xFF) == 0xFF;
+        boolean isPng = (bytes[0] & 0xFF) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47
+                && (bytes[4] & 0xFF) == 0x0D && (bytes[5] & 0xFF) == 0x0A && (bytes[6] & 0xFF) == 0x1A && (bytes[7] & 0xFF) == 0x0A;
+
+        if ("jpg".equals(format) && !isJpg) {
+            throw new IllegalArgumentException("JPG로 판단됐지만 실제 파일 시그니처가 JPG가 아님(확장자만 jpg일 가능성)");
+        }
+        if ("png".equals(format) && !isPng) {
+            throw new IllegalArgumentException("PNG로 판단됐지만 실제 파일 시그니처가 PNG가 아님(확장자만 png일 가능성)");
+        }
+    }
+
+    // ✅ (추가) 바이트 배열을 헥사 문자열로
+    private static String toHex(byte[] b, int n) {
+        if (b == null) return "null";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < Math.min(n, b.length); i++) {
+            sb.append(String.format("%02X ", b[i]));
+        }
+        return sb.toString().trim();
     }
 
     private String optText(JSONObject obj, String... path) {
