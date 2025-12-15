@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	  xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8">
+<title>마이페이지</title>
+<link th:rel="stylesheet" th:href = "@{/css/Info.css}">
+</head>
+<body>
+	<!-- <div th:text="${menuMap}">no menuMap</div> -->
+    <!-- 🔷 년도-월 선택 폼 -->
+    <form th:action="@{/user/mypage}" method="get" style="margin-bottom: 20px;" id="days">
+        <input type="month" name="yearMonth" th:value="${yearMonth}">
+        <button type="submit">조회</button>
+    </form>
+
+    <table id="calTbl" border="1">
+	    <tbody>
+	    <!-- 5행 반복: 0 ~ 4 -->
+	    <tr th:each="row : ${#numbers.sequence(0, 4)}">
+	        <!-- 각 행마다 7열 반복: 0 ~ 6 -->
+	        <td th:each="col : ${#numbers.sequence(0, 6)}"
+			    th:with="idx=${row * 7 + col}">
+			    <div th:if="${idx < calendar.size()}"
+			         th:with="day=${calendar[idx]}">
+			
+			        <div>
+			            <b>
+			                <a th:href="@{/user/mypage(yearMonth=${yearMonth}, day=${day})}"
+			                   th:text="${day + ' 일'}"></a>
+			            </b>
+			        </div>
+			
+			        <!-- 🔹 여기! menuMap[day.toString()] -->
+			        <th:block th:with="items=${menuMap[day.toString()]}">
+			            <th:block th:if="${items != null}">
+			                <!-- 앞 2개만 출력 -->
+			                <div th:each="menuText, stat : ${items}"
+			                     th:if="${stat.index < 2}"
+			                     class="calText">
+			                    <span th:text="${menuText}"></span>
+			                </div>
+			
+			                <!-- 3개 이상이면 '외 n개' -->
+			                <div class="calText"
+			                     th:if="${#lists.size(items) > 2}">
+			                    <span th:text="|외 ${#lists.size(items) - 2}개|"></span>
+			                </div>
+			            </th:block>
+			        </th:block>
+			
+			    </div>
+			</td>
+	    </tr>
+	    </tbody>
+	</table>
+
+    <table id="receiptInfoTbl">
+        <tr>
+            <td class="receiptInfoTitle">
+                <h3>이번 달 정보</h3>
+            </td>
+        </tr>
+        <tr>
+            <td class="totalPrice">
+                이번 달 총 사용 금액 :<br>
+                <span th:text="${#numbers.formatInteger(monthTotal, 0, 'COMMA')}"></span>원
+            </td>
+        </tr>
+        <tr>
+		    <td class="difference">
+		        지난 달 총 사용 금액 :
+		        <span th:text="${#numbers.formatInteger(prevMonthTotal, 0, 'COMMA')}"></span>원 <br><br>
+		        지난 달 대비 :
+		        <span th:text="${#numbers.formatInteger(monthTotal - prevMonthTotal, 0, 'COMMA')}"></span>원
+		    </td>
+		</tr>
+    </table>
+
+    <table id="infoTbl">
+        <tr>
+            <td>
+                <form th:action="@{/user/signout}" method="post">
+                    <button>회원탈퇴</button>
+                </form>
+            </td>
+            <td>
+                <form th:action="@{/user/modify}" method="post">
+                    <button>정보 수정</button>
+                </form>
+            </td>
+        </tr>
+    </table>
+
+    <!-- 🔽 날짜 클릭 시 상세 내역 -->
+    <div th:if="${selectedDay != null}" id="detail">
+
+        <h3 th:text="${'============== [' + selectedDay + ' 일 사용 내역]  =============='}"></h3>
+
+        <!-- 내역이 있을 때 -->
+        <div th:if="${selectedReceipts != null and !#lists.isEmpty(selectedReceipts)}">
+            <th:block th:each="item : ${selectedReceipts}">
+                <th:block th:if="${!#strings.isEmpty(item.items_name)}"
+                          th:with="
+                                names=${#strings.arraySplit(item.items_name, ',')},
+                                prices=${#strings.arraySplit(item.items_price, ',')},
+                                counts=${#strings.arraySplit(item.items_count, ',')}">
+
+                    <div th:each="name, stat : ${names}" class="calText">
+                        <span th:text="${'상호명 : ' + item.s_shop}"></span><br>
+                        <span th:text="${'주소 : ' + item.s_adrr}"></span><br>
+                        <span th:text="${'메뉴 : ' + name}"></span>
+                        (<span th:text="${counts[stat.index]}"></span>개)<br>
+
+                        <span th:text="${'가격 : ' + prices[stat.index]}"></span>원<p>
+
+                        <span>=====================================</span>
+                    </div>
+                </th:block>
+            </th:block>
+        </div>
+
+        <!-- 내역이 아예 없을 때 -->
+        <div th:if="${selectedReceipts == null or #lists.isEmpty(selectedReceipts)}">
+            해당 날짜에는 사용 내역이 없습니다.
+        </div>
+    </div>
+</body>
+
+</html>

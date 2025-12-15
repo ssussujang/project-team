@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.test.ocr.mapper.UserMapper">
+	<insert id="signup" parameterType="com.test.ocr.DTO.UserDTO">
+		insert into user values (#{u_id},#{u_pw},#{u_name},#{u_email},now(),#{u_birthday},#{role},#{gender})
+	</insert>
+	
+	<select id="findUser" parameterType="string" resultMap="UserMap">
+	    SELECT * FROM user WHERE u_id = #{value}
+	</select>
+	
+	<resultMap type="com.test.ocr.DTO.UserDTO" id="UserMap">
+		<id property="u_id" column = "u_id"/>
+		<result property="u_pw" column = "u_pw"/>
+		<result property="u_name" column = "u_name"/>
+		<result property="u_email" column = "u_email"/>
+		<result property="u_birthday" column = "u_birthday"/>
+		<result property="u_date" column = "u_date"/>
+		<result property="gender" column = "gender"/>
+		<result property="role" column = "role"/>
+	</resultMap>
+	
+	<insert id="insertSave">
+	    INSERT INTO save
+	    (user_id, s_shop, s_adrr, s_date, items_name, items_price, items_count)
+	    VALUES
+	    (#{user_id}, #{s_shop}, #{s_adrr}, #{s_date}, #{items_name}, #{items_price}, #{items_count});
+	</insert>
+	
+	<resultMap id="SaveMap" type="com.test.ocr.DTO.SaveDTO">
+	    <id property="s_id" column="s_id"/>
+	
+	    <result property="user_id" column="user_id"/>
+	    <result property="s_shop" column="s_shop"/>
+	    <result property="s_adrr" column="s_adrr"/>
+	
+	    <result property="s_date" column="s_date" javaType="java.time.LocalDate"/>
+	
+	    <result property="items_name" column="items_name"/>
+	    <result property="items_price" column="items_price"/>
+	    <result property="items_count" column="items_count"/>
+	</resultMap>
+	
+	
+	<select id="getSavedReceipts" resultMap="SaveMap">
+	    SELECT *
+	    FROM save
+	    WHERE user_id = #{user_id}
+	    ORDER BY s_date ASC
+	</select>
+	
+	
+	<select id="getSavedReceiptsDate" resultMap="SaveMap">
+	    SELECT *
+	    FROM save
+	    WHERE user_id = #{user_id}
+	      AND DATE_FORMAT(s_date, '%Y-%m') = #{yearMonth}
+	    ORDER BY s_date ASC
+	</select>
+	
+</mapper>
