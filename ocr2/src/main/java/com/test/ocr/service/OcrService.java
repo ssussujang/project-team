@@ -25,11 +25,11 @@ public class OcrService {
 		
 		try {
 
-            String url = "https://avdl7nlabe.apigw.ntruss.com/custom/v1/47891/06b4b8344770a0d7a515f47bec03defd12060f8728dc4bf0d05599060b7af384/document/receipt";
+            String url = "url";
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
-            headers.set("X-OCR-SECRET", "SFVHdnNtZ2FNRkpQYVlybnd4RG1tWGR5UVN4bU14anA=");
+            headers.set("X-OCR-SECRET", "key");
             
             // ✅ 파일 타입에 따라 format 결정
             String contentType = file.getContentType(); // 예: image/jpeg, image/png
