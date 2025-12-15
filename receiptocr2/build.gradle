@@ -60,6 +60,12 @@ dependencies {
     
      /* --- OpenAI --- */
     implementation 'com.openai:openai-java:4.9.0'
+    
+    
+   // ✅ WEBP 읽기(ImageIO 플러그인) - 이것만 남기세요
+    implementation 'com.twelvemonkeys.imageio:imageio-webp:3.12.0'
+    
+     
 }
 
 tasks.named('test') {

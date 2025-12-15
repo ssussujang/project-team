@@ -1,5 +1,9 @@
 package com.test.ocr.service;
 
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -7,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+
+import javax.imageio.ImageIO;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -23,6 +29,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.test.ocr.DTO.ItemDTO;
 import com.test.ocr.DTO.ReceiptDTO;
 
+import jakarta.annotation.PostConstruct;
+
 @Service
 public class OcrService {
 
@@ -33,6 +41,15 @@ public class OcrService {
     private String clovaSecret;
 
     private final RestTemplate restTemplate = new RestTemplate();
+
+    @PostConstruct
+    public void initImageIO() {
+        // Spring Boot fat-jar 환경에서 플러그인 스캔이 늦게 잡히는 경우 대비
+        ImageIO.scanForPlugins();
+
+        boolean webpReadable = ImageIO.getImageReadersByFormatName("webp").hasNext();
+        System.out.println("[ImageIO] webp reader available = " + webpReadable);
+    }
 
     public JSONObject callClovaOCR(MultipartFile file) {
         try {
@@ -49,47 +66,60 @@ public class OcrService {
 
             URI uri = URI.create(url);
 
-            // 2) format 결정 (CLOVA는 보통 jpg/png만)
-            String format = detectFormat(file);
-
-            // 3) JSON 바디 구성 (Base64 포함)
+            // 2) 바이트 읽기
             byte[] bytes = file.getBytes();
 
-            // ✅ (추가) 실제 파일 바이트 검증 + 디버그 로그
-            validateImage(bytes, format, file);
+            // 3) 실제 파일 포맷 감지(매직바이트 기준)
+            String actual = detectFormatByMagic(bytes);
 
+            System.out.println("[UPLOAD] name=" + file.getOriginalFilename()
+                    + ", contentType=" + file.getContentType()
+                    + ", actual=" + actual
+                    + ", size=" + bytes.length
+                    + ", head=" + toHex(bytes, 16));
+
+            // 4) WEBP면 JPG로 변환 (CLOVA는 jpg/png가 가장 안전)
+            String formatForClova = actual;
+            if ("webp".equals(actual)) {
+                System.out.println("[CONVERT] WEBP detected. Converting to JPG... name=" + file.getOriginalFilename());
+                bytes = convertWebpToJpg(bytes);
+                formatForClova = "jpg";
+            }
+
+            // 5) 최종 검증 (CLOVA로 보내는 실제 바이트 기준)
+            validateImage(bytes, formatForClova);
+
+            // 6) Base64
             String base64 = Base64.getEncoder().encodeToString(bytes);
 
+            // 7) JSON 바디 구성
             JSONObject body = new JSONObject();
             body.put("version", "V2");
             body.put("requestId", UUID.randomUUID().toString());
             body.put("timestamp", System.currentTimeMillis());
 
             JSONObject image = new JSONObject();
-            image.put("format", format);
+            image.put("format", formatForClova);
             image.put("name", "receipt");
-            image.put("data", base64); // ✅ data:image/... 같은 prefix 절대 넣지 말기
+            image.put("data", base64);
 
             JSONArray images = new JSONArray();
             images.put(image);
             body.put("images", images);
 
-            // 4) 헤더
+            // 8) 헤더
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("X-OCR-SECRET", secret);
 
-            // ✅ (추가) 전송 직전 핵심 로그 (data 내용은 절대 출력하지 않음)
-            System.out.println("[CLOVA REQ] format=" + format
+            System.out.println("[CLOVA REQ] format=" + formatForClova
                     + ", name=" + file.getOriginalFilename()
                     + ", ct=" + file.getContentType()
-                    + ", base64Len=" + base64.length()
-                    + ", ts=" + body.getLong("timestamp")
-                    + ", contentTypeHeader=" + headers.getContentType());
+                    + ", base64Len=" + base64.length());
 
             HttpEntity<String> request = new HttpEntity<>(body.toString(), headers);
 
-            // 5) 호출
+            // 9) 호출
             ResponseEntity<String> response = restTemplate.postForEntity(uri, request, String.class);
 
             String respBody = response.getBody();
@@ -99,7 +129,6 @@ public class OcrService {
             return (respBody == null || respBody.isBlank()) ? null : new JSONObject(respBody);
 
         } catch (HttpClientErrorException e) {
-            // ✅ 400/401/403/413 등 원인 파악은 이 바디가 핵심
             System.out.println("[CLOVA JSON] HTTP ERROR status=" + e.getStatusCode());
             System.out.println("[CLOVA JSON] HTTP ERROR body=" + e.getResponseBodyAsString());
             e.printStackTrace();
@@ -111,6 +140,78 @@ public class OcrService {
         }
     }
 
+    // ====== WEBP -> JPG 변환 ======
+    private byte[] convertWebpToJpg(byte[] webpBytes) {
+        try {
+            BufferedImage src = ImageIO.read(new ByteArrayInputStream(webpBytes));
+            if (src == null) {
+                throw new IllegalArgumentException("WEBP 디코딩 실패: ImageIO가 WEBP를 읽지 못했습니다. (WEBP ImageIO 의존성 필요)");
+            }
+
+            // JPG는 알파(투명) 지원이 없으므로 RGB로 변환
+            BufferedImage rgb = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = rgb.createGraphics();
+            g.drawImage(src, 0, 0, null);
+            g.dispose();
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            boolean ok = ImageIO.write(rgb, "jpg", out);
+            if (!ok) throw new IllegalArgumentException("JPG 인코딩 실패: ImageIO.write가 false 반환");
+
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("WEBP → JPG 변환 실패: " + e.getMessage(), e);
+        }
+    }
+
+    // ====== 실제 포맷(매직바이트) 감지 ======
+    private String detectFormatByMagic(byte[] bytes) {
+        if (bytes == null || bytes.length < 12) return "unknown";
+
+        // JPEG: FF D8 FF
+        boolean isJpg = (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8 && (bytes[2] & 0xFF) == 0xFF;
+        if (isJpg) return "jpg";
+
+        // PNG: 89 50 4E 47 0D 0A 1A 0A
+        boolean isPng = (bytes[0] & 0xFF) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47
+                && (bytes[4] & 0xFF) == 0x0D && (bytes[5] & 0xFF) == 0x0A && (bytes[6] & 0xFF) == 0x1A && (bytes[7] & 0xFF) == 0x0A;
+        if (isPng) return "png";
+
+        // WEBP: "RIFF" .... "WEBP"
+        boolean isRiff = bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46; // RIFF
+        boolean isWebp = bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50; // WEBP
+        if (isRiff && isWebp) return "webp";
+
+        return "unknown";
+    }
+
+    // ====== 최종 검증 ======
+    private void validateImage(byte[] bytes, String format) {
+        if (bytes == null || bytes.length < 8) {
+            throw new IllegalArgumentException("이미지 파일이 너무 작거나 비어있음");
+        }
+        if ("jpg".equals(format)) {
+            boolean isJpg = (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8 && (bytes[2] & 0xFF) == 0xFF;
+            if (!isJpg) throw new IllegalArgumentException("최종 전송 포맷이 JPG인데, 바이트 시그니처가 JPG가 아닙니다.");
+        } else if ("png".equals(format)) {
+            boolean isPng = (bytes[0] & 0xFF) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47
+                    && (bytes[4] & 0xFF) == 0x0D && (bytes[5] & 0xFF) == 0x0A && (bytes[6] & 0xFF) == 0x1A && (bytes[7] & 0xFF) == 0x0A;
+            if (!isPng) throw new IllegalArgumentException("최종 전송 포맷이 PNG인데, 바이트 시그니처가 PNG가 아닙니다.");
+        } else {
+            throw new IllegalArgumentException("CLOVA 전송 포맷은 jpg/png만 허용하도록 처리 중입니다. format=" + format);
+        }
+    }
+
+    private static String toHex(byte[] b, int n) {
+        if (b == null) return "null";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < Math.min(n, b.length); i++) {
+            sb.append(String.format("%02X ", b[i]));
+        }
+        return sb.toString().trim();
+    }
+
+    // ====== 이하 parseReceipt는 네 코드 그대로 (변경 없음) ======
     public ReceiptDTO parseReceipt(JSONObject json) {
         if (json == null) return new ReceiptDTO();
 
@@ -123,18 +224,14 @@ public class OcrService {
                     .getJSONObject("receipt")
                     .getJSONObject("result");
 
-            // 가게명
             dto.setR_shop(optText(result, "storeInfo", "name"));
 
-            // 주소
             try {
                 JSONObject storeInfo = result.optJSONObject("storeInfo");
                 JSONArray addrArr = (storeInfo == null) ? null : storeInfo.optJSONArray("addresses");
-
                 if (addrArr != null && addrArr.length() > 0) {
                     JSONObject addrObj = addrArr.optJSONObject(0);
                     String addr = (addrObj == null) ? "" : addrObj.optString("text", "");
-
                     if (addr.isEmpty() && addrObj != null) {
                         JSONObject formatted = addrObj.optJSONObject("formatted");
                         if (formatted != null) addr = formatted.optString("value", "");
@@ -147,7 +244,6 @@ public class OcrService {
                 dto.setR_adrr(null);
             }
 
-            // 날짜
             try {
                 String dateStr = optText(result, "paymentInfo", "date");
                 dto.setR_date(parseLocalDateFlexible(dateStr));
@@ -155,7 +251,6 @@ public class OcrService {
                 dto.setR_date(null);
             }
 
-            // 총액
             try {
                 String totalStr = "";
                 JSONObject totalPrice = result.optJSONObject("totalPrice");
@@ -168,14 +263,12 @@ public class OcrService {
                 dto.setR_total(0);
             }
 
-            // 아이템
             List<ItemDTO> itemList = new ArrayList<>();
             try {
                 JSONArray subResults = result.optJSONArray("subResults");
                 if (subResults != null && subResults.length() > 0) {
                     JSONObject firstBlock = subResults.optJSONObject(0);
                     JSONArray items = (firstBlock == null) ? null : firstBlock.optJSONArray("items");
-
                     if (items != null) {
                         for (int i = 0; i < items.length(); i++) {
                             JSONObject itemObj = items.optJSONObject(i);
@@ -221,57 +314,6 @@ public class OcrService {
         }
 
         return dto;
-    }
-
-    // ----------------- helpers -----------------
-
-    private String detectFormat(MultipartFile file) {
-        String ct = file.getContentType();
-
-        if ("image/png".equalsIgnoreCase(ct)) return "png";
-        if ("image/jpeg".equalsIgnoreCase(ct) || "image/jpg".equalsIgnoreCase(ct)) return "jpg";
-
-        String name = file.getOriginalFilename();
-        if (name != null) {
-            String lower = name.toLowerCase();
-            if (lower.endsWith(".png")) return "png";
-            if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "jpg";
-        }
-        throw new IllegalArgumentException("지원하지 않는 이미지 타입: contentType=" + ct + ", filename=" + name);
-    }
-
-    // ✅ (추가) 이미지 파일 검증 + 헤더(매직바이트) 로그
-    private void validateImage(byte[] bytes, String format, MultipartFile file) {
-        System.out.println("[UPLOAD] name=" + file.getOriginalFilename()
-                + ", ct=" + file.getContentType()
-                + ", detectedFormat=" + format
-                + ", size=" + (bytes == null ? -1 : bytes.length)
-                + ", head=" + toHex(bytes, 16));
-
-        if (bytes == null || bytes.length < 8) {
-            throw new IllegalArgumentException("이미지 파일이 너무 작거나 비어있음");
-        }
-
-        boolean isJpg = (bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8 && (bytes[2] & 0xFF) == 0xFF;
-        boolean isPng = (bytes[0] & 0xFF) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47
-                && (bytes[4] & 0xFF) == 0x0D && (bytes[5] & 0xFF) == 0x0A && (bytes[6] & 0xFF) == 0x1A && (bytes[7] & 0xFF) == 0x0A;
-
-        if ("jpg".equals(format) && !isJpg) {
-            throw new IllegalArgumentException("JPG로 판단됐지만 실제 파일 시그니처가 JPG가 아님(확장자만 jpg일 가능성)");
-        }
-        if ("png".equals(format) && !isPng) {
-            throw new IllegalArgumentException("PNG로 판단됐지만 실제 파일 시그니처가 PNG가 아님(확장자만 png일 가능성)");
-        }
-    }
-
-    // ✅ (추가) 바이트 배열을 헥사 문자열로
-    private static String toHex(byte[] b, int n) {
-        if (b == null) return "null";
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < Math.min(n, b.length); i++) {
-            sb.append(String.format("%02X ", b[i]));
-        }
-        return sb.toString().trim();
     }
 
     private String optText(JSONObject obj, String... path) {
