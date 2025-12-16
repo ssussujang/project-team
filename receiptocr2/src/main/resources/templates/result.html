@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>나의 영수증 분석</title>
+
+    <link rel="stylesheet" href="/css/receipt/receiptanalyze.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- ✅ 2) 퍼센트 숫자 표시용 플러그인 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body>
+    <h2>나의 영수증 분석</h2>
+    <p class="page-desc">
+        나의 일별 / 주별 / 월별 지출과 전체 사용자 성별 지출, 평균 비교를 한 눈에
+        볼 수 있는 페이지입니다.
+    </p>
+
+    <div class="chart-grid">
+        <div class="card">
+            <h3>일별 지출 <span class="badge">Daily</span></h3>
+            <div class="chart-wrapper">
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>주별 지출 <span class="badge">Weekly</span></h3>
+            <div class="chart-wrapper">
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>월별 지출 <span class="badge">Monthly</span></h3>
+            <div class="chart-wrapper">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>성별 지출 <span class="badge">Gender</span></h3>
+            <div class="chart-wrapper gender-wrapper">
+                <canvas id="genderChart"></canvas>
+            </div>
+             <div id="genderSummary" class="gender-summary"></div>
+        </div>
+
+        <div class="card">
+            <h3>나의 평균 소비 vs 전체 평균</h3>
+            <div class="avg-box">
+                <div class="avg-text">
+                    <div>
+                        나의 1회 결제 평균 금액:
+                        <b th:text="${#numbers.formatInteger(myAvg, 0, 'COMMA')} + ' 원'">0 원</b>
+                    </div>
+                    <div>
+                        전체 사용자 1회 결제 평균 금액:
+                        <b th:text="${#numbers.formatInteger(allAvg, 0, 'COMMA')} + ' 원'">0 원</b>
+                    </div>
+                </div>
+                <div class="avg-chart-box">
+                    <canvas id="avgChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a href="/welcome" class="btn-back">← 메인으로 돌아가기</a>
+
+    <!-- 1) 서버 데이터를 JS 전역에만 심어주기 (Thymeleaf 사용) -->
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+        window.receiptData = {
+            dailyData:   /*[[${dailyData}]]*/ [],
+            weeklyData:  /*[[${weeklyData}]]*/ [],
+            monthlyData: /*[[${monthlyData}]]*/ [],
+            genderData:  /*[[${genderData}]]*/ [],
+            myAvg:       /*[[${myAvg}]]*/ 0,
+            allAvg:      /*[[${allAvg}]]*/ 0
+        };
+    /*]]>*/
+    </script>
+
+    <!-- 2) 실제 차트 그리는 JS (순수 JS 파일) -->
+    <script src="/js/myreceiptCharts.js"></script>
+</body>
+</html>

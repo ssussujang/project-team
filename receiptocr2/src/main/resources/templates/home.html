@@ -4,9 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Insert title here</title>
-<link th:rel="stylesheet" th:href = "@{/css/Login.css}">
-
-
+<link th:rel="stylesheet" th:href="@{/css/Login.css}">
 </head>
 <body>
 	<div id="saveMsg" th:text="${saveMsg}" style="display:none"></div>
@@ -18,79 +16,81 @@
         }
     </script>
 
-
-	<table id ="menuTbl">
-	
+	<table id="menuTbl">
 		<tr>
 			<td class="title">
 				<h2>영수증</h2>
 			</td>
-		</tr>	
+		</tr>
 	</table>
+
 	<table id="loginTbl" sec:authorize="isAnonymous()">
-		
 		<form action="/loginProc" method="post">
 			<tr>
-				<td class ="input">
+				<td class="input">
 					ID <input type="text" name="u_id" placeholder="아이디">
 				</td>
 			</tr>
 			<tr>
-				<td class ="input">
+				<td class="input">
 					PW <input type="password" name="u_pw" placeholder="비밀번호">
 				</td>
 			</tr>
 			<tr>
-				<td class = "loginbtn">
+				<td class="loginbtn">
 					<div th:if="${param.error}" style="color:red;">
 						로그인 실패! 아이디 또는 비밀번호를 확인하세요.
 					</div>
 					<button type="submit">로그인</button>
-					
-					
-		</form>		
+		</form>
 					<button type="button" th:onclick="|location.href='@{/user/signup}'|">회원가입</button>
-					
 				</td>
-				
 			</tr>
 	</table>
-	
+
 	<table id="userTbl" sec:authorize="isAuthenticated()">
 		<tr>
 			<td align="center" colspan="2">
 				<span th:text="${#authentication.principal.userNameReal} + '님 환영합니다! 😊'"></span>
 			</td>
 		</tr>
+		<tr>
 			<td align="center">
 				<button type="button" th:onclick="|location.href='@{/logout}'|">로그아웃</button>
 			</td>
-		
-		<td align="center">
-			<form th:action ="@{/user/mypage}" method="get">
-				<button type="submit">마이페이지</button>
-			</form>
-		</td>
-		
-		</tr>	
+
+			<td align="center">
+				<form th:action="@{/user/mypage}" method="get">
+					<button type="submit">마이페이지</button>
+				</form>
+			</td>
+		</tr>
 	</table>
-	
-	
-	
-	
+
+	<!-- ✅ 여기 추가: (오른쪽 빨간 네모 위치) 나의 지출 분석 버튼 -->
+	<table id="analysisTbl" sec:authorize="isAuthenticated()">
+		<tr>
+			<td align="center">
+				<button type="button"
+						id="analysisBtn"
+						th:onclick="|location.href='@{/result}'|">
+					나의 지출 분석
+				</button>
+			</td>
+		</tr>
+	</table>
+
     <table id="homeTbl" sec:authorize="isAuthenticated()">
-    	
     	<tr>
     		<td class="inputReceipt">
     			<h1 class="title">영수증 데이터 확인</h1>
-    			<div id="result" th:if="${saveForm != null}">
 
+    			<div id="result" th:if="${saveForm != null}">
 				    <!-- 여러 영수증 한 번에 보내는 폼 -->
 				    <form th:object="${saveForm}" action="/receipt/save" method="post">
-				
 				        <div th:each="receipt, stat : *{receipts}">
 				            <h3>[[${stat.index + 1}]] 번 영수증</h3>
-				
+
 				            <table align="center">
 				                <tr>
 				                    <td>
@@ -113,7 +113,7 @@
 				                <tr>
 				                    <td>======= 상품 정보 =======</td>
 				                </tr>
-				
+
 				                <!-- 상품 리스트 -->
 				                <tr th:each="name, iStat : *{receipts[__${stat.index}__].itemNames}">
 				                    <td>
@@ -131,15 +131,14 @@
 				                    </td>
 				                </tr>
 				            </table>
-				
+
 				            <hr>
 				        </div>
-				
+
 				        <button type="submit">영수증 전체 등록</button>
 				    </form>
 				</div>
-			
-			
+
 			    <!-- 항상 표시되는 업로드 폼 -->
 			    <div id="upload">
 			        <form action="/receipt/uploadReceipt" method="post" enctype="multipart/form-data">
@@ -147,28 +146,18 @@
 			            <button type="submit">영수증 넣기</button>
 			        </form>
 			        <form action="/receipt/writeReceipt" method="get">
-			           
 			            <button type="submit">수기 입력</button>
 			        </form>
 			    </div>
-    		
-    		
     		</td>
-    		
     	</tr>
-    	
-        
     </table>
+
 	<table id="homeTbl" sec:authorize="isAnonymous()">
-		
 	   <tr>
     		<td th:replace="NotLogin :: NotLogin"></td>
-    		
     	</tr>
-		
 	</table>
-	
-	
-	
+
 </body>
 </html>
