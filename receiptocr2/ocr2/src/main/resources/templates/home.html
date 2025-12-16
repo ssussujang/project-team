@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	  xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<link th:rel="stylesheet" th:href = "@{/css/Login.css}">
+
+
+</head>
+<body>
+	<div id="saveMsg" th:text="${saveMsg}" style="display:none"></div>
+
+    <script>
+        const msg = document.getElementById('saveMsg').textContent.trim();
+        if (msg) {
+            alert(msg);
+        }
+    </script>
+
+
+	<table id ="menuTbl">
+	
+		<tr>
+			<td class="title">
+				<h2>영수증</h2>
+			</td>
+		</tr>	
+	</table>
+	<table id="loginTbl" sec:authorize="isAnonymous()">
+		
+		<form action="/loginProc" method="post">
+			<tr>
+				<td class ="input">
+					ID <input type="text" name="u_id" placeholder="아이디">
+				</td>
+			</tr>
+			<tr>
+				<td class ="input">
+					PW <input type="password" name="u_pw" placeholder="비밀번호">
+				</td>
+			</tr>
+			<tr>
+				<td class = "loginbtn">
+					<div th:if="${param.error}" style="color:red;">
+						로그인 실패! 아이디 또는 비밀번호를 확인하세요.
+					</div>
+					<button type="submit">로그인</button>
+					
+					
+		</form>		
+					<button type="button" th:onclick="|location.href='@{/user/signup}'|">회원가입</button>
+					
+				</td>
+				
+			</tr>
+	</table>
+	
+	<table id="userTbl" sec:authorize="isAuthenticated()">
+		<tr>
+			<td align="center" colspan="2">
+				<span th:text="${#authentication.principal.userNameReal} + '님 환영합니다! 😊'"></span>
+			</td>
+		</tr>
+			<td align="center">
+				<button type="button" th:onclick="|location.href='@{/logout}'|">로그아웃</button>
+			</td>
+		
+		<td align="center">
+			<form th:action ="@{/user/mypage}" method="get">
+				<button type="submit">마이페이지</button>
+			</form>
+		</td>
+		
+		</tr>	
+	</table>
+	
+	
+	
+	
+    <table id="homeTbl" sec:authorize="isAuthenticated()">
+    	
+    	<tr>
+    		<td class="inputReceipt">
+    			<h1 class="title">영수증 데이터 확인</h1>
+    			<!-- 1) 여러 영수증 모드 -->
+				<div id="resultMany" th:if="${saveForm != null}">
+				  <form th:object="${saveForm}" action="/receipt/save" method="post">
+				
+				    <div th:each="r, rStat : *{receipts}">
+				      <h3 th:text="${rStat.index + 1} + '번 영수증'"></h3>
+				
+				      <table align="center">
+				        <tr>
+				          <td>가게 <input th:field="*{receipts[__${rStat.index}__].s_shop}"></td>
+				        </tr>
+				        <tr>
+				          <td>주소 <input th:field="*{receipts[__${rStat.index}__].s_adrr}"></td>
+				        </tr>
+				        <tr>
+				          <td>날짜 <input th:field="*{receipts[__${rStat.index}__].s_date}" placeholder="YY. MM. DD."></td>
+				        </tr>
+				
+				        <tr><td>======= 상품 정보 =======</td></tr>
+				
+				        <!-- itemNames 기준으로 돌면서, 같은 index의 price/count를 같이 보여줌 -->
+				        <tr th:each="name, iStat : *{receipts[__${rStat.index}__].itemNames}">
+				          <td>
+				            <p>
+				              상품명
+				              <input th:field="*{receipts[__${rStat.index}__].itemNames[__${iStat.index}__]}">
+				            </p>
+				            <p>
+				              가격
+				              <input th:field="*{receipts[__${rStat.index}__].itemPrices[__${iStat.index}__]}">
+				            </p>
+				            <p>
+				              수량
+				              <input th:field="*{receipts[__${rStat.index}__].itemCounts[__${iStat.index}__]}">
+				            </p>
+				            <hr>
+				          </td>
+				        </tr>
+				      </table>
+				
+				      <hr>
+				    </div>
+				
+				    <div class="receiptbtn">
+				      <button type="submit">영수증 전체 등록</button>
+				    </div>
+				  </form>
+				</div>
+
+				
+				<!-- 2) 수기 1개 입력 모드 -->
+				<div id="resultOne" th:if="${receipt != null}">
+				  <form action="/receipt/saveOne" method="post">
+				    <table align="center">
+				      <tr>
+				        <td>가게 <input type="text" name="s_shop" th:value="${receipt.r_shop}"></td>
+				      </tr>
+				      <tr>
+				        <td>주소 <input type="text" name="s_adrr" th:value="${receipt.r_adrr}"></td>
+				      </tr>
+				
+				      <!-- 날짜: 화면은 예쁘게, 서버 전송은 yyyy-MM-dd 로 -->
+				      <tr>
+				        <td>날짜
+				          <input type="date"
+						       name="s_date"
+						       th:value="${#temporals.format(receipt.r_date, 'yyyy-MM-dd')}">
+				          
+				        </td>
+				      </tr>
+				
+				      <tr><td>======= 상품 정보 =======</td></tr>
+				
+				      <tr th:each="item, stat : ${receipt.items}">
+						  <td>
+						    <p>상품명
+						      <input type="text" name="itemNames" th:value="${item.i_name}" required>
+						    </p>
+						    <p>가격
+						      <input type="text" name="itemPrices" th:value="${item.i_price}" required>
+						    </p>
+						    <p>수량
+						      <input type="text" name="itemCounts" th:value="${item.i_count}" required>
+						    </p>
+						    <hr>
+						  </td>
+						</tr>
+				    </table>
+				
+				    <div class="receiptbtn">
+				      <button type="submit">영수증 등록</button>
+				    </div>
+				  </form>
+				</div>
+
+
+			
+			
+			    <!-- 항상 표시되는 업로드 폼 -->
+			    <div id="upload">
+			        <form action="/receipt/uploadReceipt" method="post" enctype="multipart/form-data">
+			            <input type="file" name="receipt" multiple>
+			            <button type="submit">영수증 넣기</button>
+			        </form>
+			        <form action="/receipt/writeReceipt" method="get">
+			           
+			            <button type="submit">수기 입력</button>
+			        </form>
+			    </div>
+    		
+    		
+    		</td>
+    		
+    	</tr>
+    	
+        
+    </table>
+	<table id="homeTbl" sec:authorize="isAnonymous()">
+		
+	   <tr>
+    		<td th:replace="NotLogin :: NotLogin"></td>
+    		
+    	</tr>
+		
+	</table>
+	
+	
+	
+</body>
+</html>

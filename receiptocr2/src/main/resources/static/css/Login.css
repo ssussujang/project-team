@@ -118,6 +118,11 @@ body {
     text-align: center;
 }
 
+#homeTbl .receiptbtn {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+}
 
 
 
