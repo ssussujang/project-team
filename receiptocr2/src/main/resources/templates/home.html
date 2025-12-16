@@ -83,29 +83,60 @@
     	<tr>
     		<td class="inputReceipt">
     			<h1 class="title">영수증 데이터 확인</h1>
-    			<!-- 2) 수기 1개 입력 모드 -->
-				<div id="resultOne" th:if="${receipt != null}">
-				  <form action="/receipt/saveOne" method="post">
-				    <table align="center">
-				      <tr><td>가게 <input th:value="${receipt.r_shop}" name="s_shop"></td></tr>
-				      <tr><td>주소 <input th:value="${receipt.r_adrr}" name="s_adrr"></td></tr>
-				      <tr><td>날짜 <input th:value="${receipt.r_date}" name="s_date"></td></tr>
+    			<div id="result" th:if="${saveForm != null}">
+
+				    <!-- 여러 영수증 한 번에 보내는 폼 -->
+				    <form th:object="${saveForm}" action="/receipt/save" method="post">
 				
-				      <tr><td>======= 상품 정보 =======</td></tr>
+				        <div th:each="receipt, stat : *{receipts}">
+				            <h3>[[${stat.index + 1}]] 번 영수증</h3>
 				
-				      <tr th:each="item, stat : ${receipt.items}">
-				        <td>
-				          <p>상품명 <input th:name="'itemNames[' + ${stat.index} + ']'" th:value="${item.i_name}"></p>
-				          <p>가격 <input th:name="'itemPrices[' + ${stat.index} + ']'" th:value="${item.i_price}"></p>
-				          수량 <input th:name="'itemCounts[' + ${stat.index} + ']'" th:value="${item.i_count}">
-				          <hr>
-				        </td>
-				      </tr>
-				    </table>
-				    <div class="receiptbtn">
-				    	<button type="submit">영수증 등록</button>
-				  	</div>
-				  </form>
+				            <table align="center">
+				                <tr>
+				                    <td>
+				                        가게
+				                        <input th:field="*{receipts[__${stat.index}__].s_shop}">
+				                    </td>
+				                </tr>
+				                <tr>
+				                    <td>
+				                        주소
+				                        <input th:field="*{receipts[__${stat.index}__].s_adrr}">
+				                    </td>
+				                </tr>
+				                <tr>
+				                    <td>
+				                        날짜
+				                        <input th:field="*{receipts[__${stat.index}__].s_date}">
+				                    </td>
+				                </tr>
+				                <tr>
+				                    <td>======= 상품 정보 =======</td>
+				                </tr>
+				
+				                <!-- 상품 리스트 -->
+				                <tr th:each="name, iStat : *{receipts[__${stat.index}__].itemNames}">
+				                    <td>
+				                        <p>
+				                            상품명
+				                            <input th:field="*{receipts[__${stat.index}__].itemNames[__${iStat.index}__]}">
+				                        </p>
+				                        <p>
+				                            가격
+				                            <input th:field="*{receipts[__${stat.index}__].itemPrices[__${iStat.index}__]}">
+				                        </p>
+				                        수량
+				                        <input th:field="*{receipts[__${stat.index}__].itemCounts[__${iStat.index}__]}">
+				                        <hr>
+				                    </td>
+				                </tr>
+				            </table>
+				
+				            <hr>
+				        </div>
+				
+				        <button type="submit">영수증 전체 등록</button>
+				    </form>
 				</div>
 			
 			
