@@ -1,13 +1,13 @@
+// ✅ 지출 분석 차트를 위한 JavaScript 파일 (myreceiptCharts.js)
+
 // =============================
 // 0) 도넛/파이 퍼센트 플러그인
 // =============================
 const DoughnutPercentagePlugin = {
     id: "doughnutPercentage",
     afterDraw(chart, args, options) {
-        // ✅ 도넛 / 파이 차트에만 적용 (다른 그래프에는 영향 X)
-        if (chart.config.type !== "doughnut" && chart.config.type !== "pie") {
-            return;
-        }
+        // 도넛 / 파이 차트에만 적용
+        if (chart.config.type !== "doughnut" && chart.config.type !== "pie") return;
 
         const { ctx } = chart;
         const dataset = chart.data.datasets[0];
@@ -24,8 +24,6 @@ const DoughnutPercentagePlugin = {
             if (!rawValue) return;
 
             const percentage = (rawValue / total) * 100;
-
-            // ✅ 도넛 안에는 퍼센트만 표시
             const label = `${percentage.toFixed(1)}%`;
 
             const { x, y } = arc.getCenterPoint();
@@ -43,7 +41,7 @@ const DoughnutPercentagePlugin = {
     }
 };
 
-// 전역 플러그인 등록 (Chart.js 스크립트보다 뒤, 이 파일보다 앞에 있으면 안 됨)
+// 전역 플러그인 등록
 Chart.register(DoughnutPercentagePlugin);
 
 // =============================
@@ -54,18 +52,20 @@ document.addEventListener("DOMContentLoaded", function () {
     // 컨트롤러(Thymeleaf)에서 세팅한 데이터
     const data = window.receiptData || {};
 
-    const dailyData   = data.dailyData   || [];
-    const weeklyData  = data.weeklyData  || [];
-    const monthlyData = data.monthlyData || [];
-    const genderData  = data.genderData  || [];
-    const myAvg       = data.myAvg || 0;
-    const allAvg      = data.allAvg || 0;
+    const dailyData   = Array.isArray(data.dailyData)   ? data.dailyData   : [];
+    const weeklyData  = Array.isArray(data.weeklyData)  ? data.weeklyData  : [];
+    const monthlyData = Array.isArray(data.monthlyData) ? data.monthlyData : [];
+    const genderData  = Array.isArray(data.genderData)  ? data.genderData  : [];
+
+    // ✅ 평균도 혹시 문자열이면 숫자화
+    const myAvg  = Number(data.myAvg)  || 0;
+    const allAvg = Number(data.allAvg) || 0;
 
     // -----------------------------
     // 1) 일별 지출 차트 (line)
     // -----------------------------
-    const dailyLabels = dailyData.map(row => row.dt);        // 예: "2025-12-01"
-    const dailyTotals = dailyData.map(row => row.total || 0);
+    const dailyLabels = dailyData.map(row => row.dt);
+    const dailyTotals = dailyData.map(row => Number(row.total) || 0); // ✅ 숫자화
 
     const dailyCanvas = document.getElementById("dailyChart");
     if (dailyCanvas && dailyLabels.length > 0) {
@@ -87,20 +87,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: {
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 0
-                        }
-                    },
-                    y: {
-                        beginAtZero: true
-                    }
+                    x: { ticks: { maxRotation: 45, minRotation: 0 } },
+                    y: { beginAtZero: true }
                 },
                 plugins: {
-                    legend: {
-                        display: false
-                    }
+                    legend: { display: false }
                 }
             }
         });
@@ -109,10 +100,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // -----------------------------
     // 2) 주별 지출 차트 (bar)
     // -----------------------------
-    const weeklyLabels = weeklyData.map(row =>
-        `${row.weekStart} ~ ${row.weekEnd}`   // 예: "2025-12-01 ~ 2025-12-07"
-    );
-    const weeklyTotals = weeklyData.map(row => row.total || 0);
+    const weeklyLabels = weeklyData.map(row => `${row.weekStart} ~ ${row.weekEnd}`);
+    const weeklyTotals = weeklyData.map(row => Number(row.total) || 0); // ✅ 숫자화
 
     const weeklyCanvas = document.getElementById("weeklyChart");
     if (weeklyCanvas && weeklyLabels.length > 0) {
@@ -133,20 +122,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    x: {
-                        ticks: {
-                            maxRotation: 30,
-                            minRotation: 0
-                        }
-                    },
-                    y: {
-                        beginAtZero: true
-                    }
+                    x: { ticks: { maxRotation: 30, minRotation: 0 } },
+                    y: { beginAtZero: true }
                 },
                 plugins: {
-                    legend: {
-                        display: false
-                    }
+                    legend: { display: false }
                 }
             }
         });
@@ -155,8 +135,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // -----------------------------
     // 3) 월별 지출 차트 (bar)
     // -----------------------------
-    const monthlyLabels = monthlyData.map(row => row.ym);   // 예: "2025-12"
-    const monthlyTotals = monthlyData.map(row => row.total || 0);
+    const monthlyLabels = monthlyData.map(row => row.ym);
+    const monthlyTotals = monthlyData.map(row => Number(row.total) || 0); // ✅ 숫자화
 
     const monthlyCanvas = document.getElementById("monthlyChart");
     if (monthlyCanvas && monthlyLabels.length > 0) {
@@ -177,14 +157,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+                    y: { beginAtZero: true }
                 },
                 plugins: {
-                    legend: {
-                        display: false
-                    }
+                    legend: { display: false }
                 }
             }
         });
@@ -194,29 +170,31 @@ document.addEventListener("DOMContentLoaded", function () {
     // 4) 성별 지출 도넛 차트
     // -----------------------------
     const genderLabels = genderData.map(row => {
-        if (row.gender === "M") return "남";
-        if (row.gender === "F") return "여";
+        const g = String(row.gender || "").toUpperCase();
+        if (g === "M" || g === "MALE") return "남";
+        if (g === "F" || g === "FEMALE") return "여";
         return "기타";
     });
-    const genderTotals = genderData.map(row => row.total || 0);
+
+    // ✅ total도 숫자화 (문자열 합산 방지 핵심)
+    const genderTotals = genderData.map(row => Number(row.total) || 0);
 
     const genderCanvas = document.getElementById("genderChart");
     const genderSummaryBox = document.getElementById("genderSummary");
 
     if (genderCanvas && genderLabels.length > 0) {
-        const totalSum = genderTotals.reduce((sum, v) => sum + v, 0) || 1;
+        const totalSum = genderTotals.reduce((sum, v) => sum + Number(v || 0), 0) || 1; // ✅ 숫자 합산
 
         // 도넛 아래 퍼센트 요약 텍스트
-     if (genderSummaryBox) {
-    const pieces = genderLabels.map((label, idx) => {
-        const value = Number(genderTotals[idx]) || 0;
-        const percent = (value / totalSum) * 100;
-        const formattedValue = value.toLocaleString();
-        return `<span>${label}: ${percent.toFixed(1)}% (${formattedValue}원)</span>`;
-    });
-    genderSummaryBox.innerHTML = pieces.join("");
-}
-
+        if (genderSummaryBox) {
+            const pieces = genderLabels.map((label, idx) => {
+                const value = Number(genderTotals[idx]) || 0;
+                const percent = (value / totalSum) * 100;
+                const formattedValue = value.toLocaleString();
+                return `<span>${label}: ${percent.toFixed(1)}% (${formattedValue}원)</span>`;
+            });
+            genderSummaryBox.innerHTML = pieces.join("");
+        }
 
         new Chart(genderCanvas, {
             type: "doughnut",
@@ -240,19 +218,13 @@ document.addEventListener("DOMContentLoaded", function () {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: "65%",  // 도넛 두께
+                cutout: "65%",
                 plugins: {
                     legend: {
                         position: "bottom",
-                        labels: {
-                            boxWidth: 18,
-                            padding: 16
-                        }
+                        labels: { boxWidth: 18, padding: 16 }
                     },
-                    tooltip: {
-                        enabled: false    // 말풍선 제거
-                    },
-                    // 커스텀 퍼센트 플러그인 옵션
+                    tooltip: { enabled: false },
                     doughnutPercentage: {
                         color: "#ffffff",
                         fontSize: 14,
@@ -274,7 +246,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 labels: ["나의 평균", "전체 평균"],
                 datasets: [{
                     label: "1회 결제 평균 금액",
-                    data: [myAvg, allAvg],
+                    data: [myAvg, allAvg], // ✅ 이미 숫자화됨
                     backgroundColor: [
                         "rgba(54, 162, 235, 0.7)",
                         "rgba(201, 203, 207, 0.7)"
@@ -291,18 +263,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+                    y: { beginAtZero: true }
                 },
                 plugins: {
-                    legend: {
-                        display: false
-                    }
+                    legend: { display: false }
                 }
             }
         });
     }
 
 });
-

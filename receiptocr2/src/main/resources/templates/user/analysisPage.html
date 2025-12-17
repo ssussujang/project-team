@@ -5,11 +5,11 @@
     <title>나의 영수증 분석</title>
 
     <link rel="stylesheet" href="/css/receipt/receiptanalyze.css">
-
+	<!-- 화면(페이지) 구성 + 서버 데이터(JS로 전달) -->
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- ✅ 2) 퍼센트 숫자 표시용 플러그인 추가 -->
+      <!-- Chart.js 데이터 라벨 플러그인 -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 </head>
 <body>
@@ -18,8 +18,10 @@
         나의 일별 / 주별 / 월별 지출과 전체 사용자 성별 지출, 평균 비교를 한 눈에
         볼 수 있는 페이지입니다.
     </p>
-
+ <!-- 차트들을 5개 카드로 구성 -->
     <div class="chart-grid">
+    	
+    	<!-- 일별 지출 -->
         <div class="card">
             <h3>일별 지출 <span class="badge">Daily</span></h3>
             <div class="chart-wrapper">
@@ -27,6 +29,7 @@
             </div>
         </div>
 
+		 <!-- 주별 지출 -->
         <div class="card">
             <h3>주별 지출 <span class="badge">Weekly</span></h3>
             <div class="chart-wrapper">
@@ -34,6 +37,7 @@
             </div>
         </div>
 
+		<!-- 월별 지출 -->
         <div class="card">
             <h3>월별 지출 <span class="badge">Monthly</span></h3>
             <div class="chart-wrapper">
@@ -41,6 +45,7 @@
             </div>
         </div>
 
+		<!-- 성별 지출 -->
         <div class="card">
             <h3>성별 지출 <span class="badge">Gender</span></h3>
             <div class="chart-wrapper gender-wrapper">
@@ -49,6 +54,7 @@
              <div id="genderSummary" class="gender-summary"></div>
         </div>
 
+		 <!-- 평균 비교 -->
         <div class="card">
             <h3>나의 평균 소비 vs 전체 평균</h3>
             <div class="avg-box">
@@ -69,7 +75,7 @@
         </div>
     </div>
 
-   
+   <!-- 메인으로 돌아가기 버튼 -->
 <a th:href="@{/}" class="btn-back">← 메인으로 돌아가기</a>
 
     <!-- 1) 서버 데이터를 JS 전역에만 심어주기 (Thymeleaf 사용) -->
