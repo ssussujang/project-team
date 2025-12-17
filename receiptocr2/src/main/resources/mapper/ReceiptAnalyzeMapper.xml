@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.test.ocr.mapper.ReceiptAnalyzeMapper">
+
+<!-- 그래프 표시를 하기 위한 mapper -->
+<!-- 0) 영수증 1건 저장 (영수증 분석하기 시점에 1번 INSERT 한다는 전제) -->
+  <insert id="insertReceipt"
+          parameterType="com.test.ocr.DTO.ReceiptDTO"
+          useGeneratedKeys="true"
+          keyProperty="r_no">
+    INSERT INTO receipt (
+      r_u,
+      r_place,
+      r_price,
+      r_date,
+      r_goods,
+      category,
+      gender
+    )
+    VALUES (
+      #{r_u},
+      #{r_place},
+      #{r_price},
+      #{r_date},
+      #{r_goods},
+      #{category},
+      #{gender}
+    )
+  </insert>
+
+  <!-- 1) 나의 일별 지출 -->
+  <select id="selectDailyTotalByUser"
+          parameterType="string"
+          resultType="map">
+    SELECT
+      DATE(r_date)                 AS dt,
+      SUM(CAST(r_price AS SIGNED)) AS total
+    FROM receipt
+    WHERE r_u = #{uId}
+    GROUP BY DATE(r_date)
+    ORDER BY dt
+  </select>
+
+  <!-- 2) 나의 주간 지출 -->
+  <select id="selectWeeklyTotalByUser"
+          parameterType="string"
+          resultType="map">
+    SELECT
+      YEARWEEK(r_date, 1)          AS yearWeek,
+      MIN(DATE(r_date))            AS weekStart,
+      MAX(DATE(r_date))            AS weekEnd,
+      SUM(CAST(r_price AS SIGNED)) AS total
+    FROM receipt
+    WHERE r_u = #{uId}
+    GROUP BY YEARWEEK(r_date, 1)
+    ORDER BY yearWeek
+  </select>
+
+  <!-- 3) 나의 월간 지출 -->
+  <select id="selectMonthlyTotalByUser"
+          parameterType="string"
+          resultType="map">
+    SELECT
+      DATE_FORMAT(r_date, '%Y-%m') AS ym,
+      SUM(CAST(r_price AS SIGNED)) AS total
+    FROM receipt
+    WHERE r_u = #{uId}
+    GROUP BY DATE_FORMAT(r_date, '%Y-%m')
+    ORDER BY ym
+  </select>
+
+  <!-- 4) 성별별 지출
+       4-A) receipt 테이블에 gender 컬럼을 저장해두는 구조(권장: JOIN 불필요)
+  -->
+  <select id="selectTotalByGender"
+          resultType="map">
+    SELECT
+      gender                       AS gender,
+      SUM(CAST(r_price AS SIGNED)) AS total
+    FROM receipt
+    WHERE gender IS NOT NULL
+    GROUP BY gender
+    ORDER BY gender
+  </select>
+
+  <!-- 5) 나의 평균 (현재 로직: 일별 합계의 평균) -->
+  <select id="selectMyAverage"
+          parameterType="string"
+          resultType="int">
+    SELECT IFNULL(AVG(daily_sum), 0)
+    FROM (
+      SELECT
+        DATE(r_date)                 AS dt,
+        SUM(CAST(r_price AS SIGNED)) AS daily_sum
+      FROM receipt
+      WHERE r_u = #{uId}
+      GROUP BY DATE(r_date)
+    ) t
+  </select>
+
+  <!-- 6) 전체 평균 (현재 로직: 일별 합계의 평균) -->
+  <select id="selectAllAverage"
+          resultType="int">
+    SELECT IFNULL(AVG(daily_sum), 0)
+    FROM (
+      SELECT
+        DATE(r_date)                 AS dt,
+        SUM(CAST(r_price AS SIGNED)) AS daily_sum
+      FROM receipt
+      GROUP BY DATE(r_date)
+    ) t
+  </select>
+
+
+
+
+</mapper>
